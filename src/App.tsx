@@ -2,6 +2,7 @@ import { ConversationProvider } from '@elevenlabs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Brandmark } from './components/Brandmark';
 import { ThemeToggle } from './components/ThemeToggle';
+import { CallModeToggle } from './components/CallModeToggle';
 import { Sky } from './components/Sky';
 import { Icons } from './components/Icons';
 import { Bubble, QuickReplies, Row, Typing } from './components/ChatPrimitives';
@@ -14,12 +15,16 @@ import { FAQ } from './components/FAQ';
 import { CustomerCard, CustomerPreview, CustomerQuote } from './components/CustomerCards';
 import { CUSTOMERS, FAQ as FAQ_ITEMS } from './data/flow';
 import { useTheme } from './hooks/useTheme';
+import { useCallMode } from './hooks/useCallMode';
 import { useChat } from './hooks/useChat';
 import { useOliviaAgent } from './hooks/useOliviaAgent';
 import type { CallState, ChatMessage, Customer } from './types';
 
+type DemoStep = [number, () => void];
+
 function ChatApp() {
   const { theme, toggle: toggleTheme } = useTheme();
+  const { live: liveMode, toggle: toggleLiveMode, devMode } = useCallMode();
 
   const [callOpen, setCallOpen] = useState(false);
   const [callState, setCallState] = useState<CallState>('connecting');
@@ -28,10 +33,14 @@ function ChatApp() {
 
   const callStartRef = useRef(0);
   const callTimerRef = useRef<number | null>(null);
+  const demoTimersRef = useRef<number[]>([]);
+  const wasConnectedRef = useRef(false);
+  const prevStatusRef = useRef<string>('disconnected');
   const chatHandlersRef = useRef<{
     pushVoiceBot: (t: string) => void;
     pushVoiceUser: (t: string) => void;
     onCallEnded: () => void;
+    onCallFailed: () => void;
   } | null>(null);
 
   const agent = useOliviaAgent({
@@ -39,33 +48,84 @@ function ChatApp() {
     onUserMessage: (text) => chatHandlersRef.current?.pushVoiceUser(text),
   });
 
-  // Map agent status/mode → call UI state
+  const cancelDemoTimeline = useCallback(() => {
+    demoTimersRef.current.forEach((t) => window.clearTimeout(t));
+    demoTimersRef.current = [];
+  }, []);
+
+  const stopCall = useCallback(
+    (reason: 'ended' | 'failed' = 'ended') => {
+      if (callTimerRef.current) {
+        window.clearInterval(callTimerRef.current);
+        callTimerRef.current = null;
+      }
+      cancelDemoTimeline();
+      wasConnectedRef.current = false;
+      prevStatusRef.current = 'disconnected';
+      setCallOpen(false);
+      setMuted(false);
+      setCallElapsed(0);
+      if (reason === 'failed') chatHandlersRef.current?.onCallFailed();
+      else chatHandlersRef.current?.onCallEnded();
+    },
+    [cancelDemoTimeline],
+  );
+
+  // Live mode: map agent status → call UI state. Distinguishes "never
+  // connected → disconnected" (failed) from "connected → disconnected" (ended).
   useEffect(() => {
-    if (!callOpen) return;
-    if (agent.status === 'connecting') setCallState('connecting');
-    else if (agent.status === 'connected') setCallState(agent.isSpeaking ? 'speaking' : 'listening');
-    else if (agent.status === 'disconnected') {
-      // session ended externally
-      stopCall();
+    if (!callOpen || !liveMode) {
+      prevStatusRef.current = 'disconnected';
+      wasConnectedRef.current = false;
+      return;
+    }
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = agent.status;
+
+    if (agent.status === 'connecting') {
+      setCallState('connecting');
+    } else if (agent.status === 'connected') {
+      wasConnectedRef.current = true;
+      setCallState(agent.isSpeaking ? 'speaking' : 'listening');
+    } else if (agent.status === 'disconnected' && prev !== 'disconnected') {
+      stopCall(wasConnectedRef.current ? 'ended' : 'failed');
+    }
+  }, [agent.status, agent.isSpeaking, callOpen, liveMode, stopCall]);
+
+  // Sync mute (live only, and only when SDK actually has a session)
+  useEffect(() => {
+    if (callOpen && liveMode && agent.status === 'connected') {
+      agent.setMuted(muted);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agent.status, agent.isSpeaking, callOpen]);
+  }, [muted, callOpen, liveMode, agent.status]);
 
-  // Sync mute
-  useEffect(() => {
-    if (callOpen) agent.setMuted(muted);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [muted, callOpen]);
+  const runDemoTimeline = useCallback(() => {
+    const setStateAt = (s: CallState) => setCallState(s);
+    const pushBot = (text: string) => chatHandlersRef.current?.pushVoiceBot(text);
+    const pushUser = (text: string) => chatHandlersRef.current?.pushVoiceUser(text);
 
-  const stopCall = useCallback(() => {
-    if (callTimerRef.current) {
-      window.clearInterval(callTimerRef.current);
-      callTimerRef.current = null;
-    }
-    setCallOpen(false);
-    setMuted(false);
-    setCallElapsed(0);
-    chatHandlersRef.current?.onCallEnded();
+    const steps: DemoStep[] = [
+      [1000, () => setStateAt('speaking')],
+      [1100, () => pushBot('Dobrý deň, ja som Olívia. Ako vám môžem pomôcť?')],
+      [4200, () => setStateAt('listening')],
+      [6200, () => setStateAt('thinking')],
+      [6400, () => pushUser('Otvárate aj cez víkend?')],
+      [7300, () => setStateAt('speaking')],
+      [7400, () => pushBot('Áno, v sobotu od 9 do 14. V nedeľu máme zatvorené.')],
+      [10500, () => setStateAt('listening')],
+      [12500, () => setStateAt('thinking')],
+      [12700, () => pushUser('Super, koľko stojí mesačne?')],
+      [13500, () => setStateAt('speaking')],
+      [
+        13700,
+        () =>
+          pushBot('Tri balíčky — Starter za 5 000 Kč, Business za 10 000 a Premium za 20 000.'),
+      ],
+      [17500, () => setStateAt('listening')],
+    ];
+
+    demoTimersRef.current = steps.map(([t, fn]) => window.setTimeout(fn, t));
   }, []);
 
   const callController = useMemo(
@@ -84,20 +144,24 @@ function ChatApp() {
         callTimerRef.current = window.setInterval(() => {
           setCallElapsed(Math.floor((Date.now() - callStartRef.current) / 1000));
         }, 1000);
-        try {
-          await agent.startVoice();
-        } catch (err) {
-          console.error('[Olivia] Failed to start voice:', err);
-          // surface error to user via end + post message
-          stopCall();
+
+        if (liveMode) {
+          try {
+            await agent.startVoice();
+          } catch (err) {
+            console.error('[Olivia] Failed to start voice:', err);
+            stopCall('failed');
+          }
+        } else {
+          runDemoTimeline();
         }
       },
       end: () => {
-        agent.endSession();
+        if (liveMode) agent.endSession();
         stopCall();
       },
     }),
-    [callOpen, callState, callElapsed, muted, agent, stopCall],
+    [callOpen, callState, callElapsed, muted, agent, stopCall, liveMode, runDemoTimeline],
   );
 
   const chat = useChat(callController);
@@ -108,8 +172,9 @@ function ChatApp() {
       pushVoiceBot: chat.pushVoiceBot,
       pushVoiceUser: chat.pushVoiceUser,
       onCallEnded: chat.onCallEnded,
+      onCallFailed: chat.onCallFailed,
     };
-  }, [chat.pushVoiceBot, chat.pushVoiceUser, chat.onCallEnded]);
+  }, [chat.pushVoiceBot, chat.pushVoiceUser, chat.onCallEnded, chat.onCallFailed]);
 
   // Auto-scroll
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -217,6 +282,13 @@ function ChatApp() {
     thinking: 'Premýšľam…',
   };
 
+  const sendDuringCall = () => {
+    const text = chat.input.trim();
+    if (!text) return;
+    if (liveMode) agent.sendUserMessage(text);
+    chat.handleSend();
+  };
+
   return (
     <>
       <Sky />
@@ -224,6 +296,7 @@ function ChatApp() {
         <header className="topbar">
           <Brandmark />
           <div className="top-meta">
+            {devMode && <CallModeToggle live={liveMode} onToggle={toggleLiveMode} />}
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
           </div>
         </header>
@@ -300,15 +373,8 @@ function ChatApp() {
                   onChange={(e) => chat.setInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      if (callOpen) {
-                        const text = chat.input.trim();
-                        if (text) {
-                          agent.sendUserMessage(text);
-                          chat.setInput('');
-                        }
-                      } else {
-                        chat.handleSend();
-                      }
+                      if (callOpen) sendDuringCall();
+                      else chat.handleSend();
                     }
                   }}
                 />
@@ -343,17 +409,7 @@ function ChatApp() {
                 )}
                 <button
                   className="send-btn"
-                  onClick={() => {
-                    if (callOpen) {
-                      const text = chat.input.trim();
-                      if (text) {
-                        agent.sendUserMessage(text);
-                        chat.setInput('');
-                      }
-                    } else {
-                      chat.handleSend();
-                    }
-                  }}
+                  onClick={() => (callOpen ? sendDuringCall() : chat.handleSend())}
                   disabled={!chat.input.trim()}
                   aria-label="Odoslať"
                 >
@@ -363,7 +419,9 @@ function ChatApp() {
               <div className="compose-hint">
                 <span>
                   {callOpen
-                    ? 'V živom hovore s Olíviou — môžete jej aj písať.'
+                    ? liveMode
+                      ? 'V živom hovore s Olíviou — môžete jej aj písať.'
+                      : 'Demo hovor — UI ukážka, žiadny reálny audio.'
                     : 'Olívia je AI demo — skúšajte čo chcete.'}
                 </span>
                 <span>

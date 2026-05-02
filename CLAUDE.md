@@ -9,7 +9,7 @@ Chat-first landing page pre Olívia AI agent. Backend-less na začiatok — Elev
 - Deploy: Vercel
 
 ## ElevenLabs Agent
-- **Agent ID:** `agent_0701kqfz32wpee39fymws1e3w24x`
+- **Agent ID:** `agent_0701kqfz32wpee39fymms1e3w24x`
 - **SDK:** @elevenlabs/react
 - **Connection:** WebRTC (lower latency) alebo WebSocket
 
@@ -18,7 +18,7 @@ Chat-first landing page pre Olívia AI agent. Backend-less na začiatok — Elev
 ### Start voice session
 ```tsx
 const conversation = useConversation({
-  agentId: "agent_0701kqfz32wpee39fymws1e3w24x",
+  agentId: "agent_0701kqfz32wpee39fymms1e3w24x",
   onMessage: (msg) => handleAgentMessage(msg),
   clientTools: {
     show_pricing: ({ tier }) => { /* trigger UI */ return { success: true }; },

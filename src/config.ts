@@ -1,5 +1,5 @@
 // ElevenLabs Agent Config
-export const ELEVENLABS_AGENT_ID = 'agent_0701kqfz32wpee39fymws1e3w24x';
+export const ELEVENLABS_AGENT_ID = 'agent_0701kqfz32wpee39fymms1e3w24x';
 
 // Verticals for demo
 export const VERTICALS = [

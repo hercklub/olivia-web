@@ -42,9 +42,12 @@ export function useOliviaAgent(callbacks: AgentCallbacks = {}) {
 
   const startVoice = async () => {
     await navigator.mediaDevices.getUserMedia({ audio: true });
+    // WebSocket connection — bypasses LiveKit WebRTC stack which has
+    // negotiation timeouts on this account. Higher latency than webrtc but
+    // reliable. Switch back to 'webrtc' once ElevenLabs LiveKit pathing is fixed.
     await conversation.startSession({
       agentId: ELEVENLABS_AGENT_ID,
-      connectionType: 'webrtc',
+      connectionType: 'websocket',
     });
   };
 

@@ -168,6 +168,11 @@ export function useChat(call: CallController) {
     pushUser(text, call.open);
     setActiveQuick(null);
 
+    // During a call, don't trigger the scripted intent matcher — let the
+    // user's typed message just appear (live mode also forwards it to the
+    // ElevenLabs agent from App).
+    if (call.open) return;
+
     const t = text.toLowerCase();
     if (/cena|kolko|stoj|cenn/i.test(t)) {
       for (const item of PRICING_INTRO_BOT) await pushBotText(item.content);
@@ -200,6 +205,14 @@ export function useChat(call: CallController) {
     setActiveQuick(POST_CALL_QUICK);
   }, [pushBotText]);
 
+  const onCallFailed = useCallback(async () => {
+    await pushBotText(
+      '⚠️ Pripojenie na ElevenLabs zlyhalo. Skontroluj agent ID v configu alebo prepni na Demo mód.',
+      { delay: 400 },
+    );
+    setActiveQuick(POST_CALL_QUICK);
+  }, [pushBotText]);
+
   const pushVoiceBot = useCallback((content: string) => {
     setMessages((m) => [...m, { side: 'bot', kind: 'text', content, key: k(), voice: true }]);
   }, []);
@@ -220,6 +233,7 @@ export function useChat(call: CallController) {
     handleBook,
     handleSend,
     onCallEnded,
+    onCallFailed,
     pushVoiceBot,
     pushVoiceUser,
     appendCustomer: (c: Customer) => c,

@@ -197,11 +197,51 @@ body {
   }
 }
 
-/* Sky/Night theme toggle */
+/* Demo / Live call mode toggle */
+.call-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--pill);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  box-shadow: 0 2px 0 var(--line);
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 100ms;
+}
+.call-mode-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 var(--line);
+}
+.call-mode-toggle:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--line);
+}
+.call-mode-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.call-mode-dot.demo {
+  background: var(--orange);
+}
+.call-mode-dot.live {
+  background: #2bd17e;
+  box-shadow: 0 0 0 0 rgba(43, 209, 126, 0.55);
+  animation: pulse 1.8s ease-out infinite;
+}
+
+/* Sky/Night theme toggle — iOS-style track + knob, height matches brandmark (44px) */
 .theme-toggle {
   position: relative;
   display: inline-block;
-  width: 96px;
+  width: 76px;
   height: 44px;
   border-radius: var(--pill);
   background: var(--paper);
@@ -223,10 +263,10 @@ body {
 .theme-knob {
   position: absolute;
   box-sizing: border-box;
-  top: -1.5px;
-  left: -1.5px;
-  width: 44px;
-  height: 44px;
+  top: 3.5px;
+  left: 3.5px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--lime);
   border: 1.5px solid var(--line);
@@ -234,7 +274,7 @@ body {
   pointer-events: none;
 }
 .theme-knob.right {
-  transform: translateX(52px);
+  transform: translateX(32px);
   background: #1a2236;
 }
 [data-theme="night"] .theme-knob.right {
@@ -247,20 +287,24 @@ body {
 .theme-icon {
   position: absolute;
   box-sizing: border-box;
-  top: -1.5px;
-  width: 44px;
-  height: 44px;
+  top: 3.5px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   transition: opacity 200ms, color 200ms;
   pointer-events: none;
 }
+.theme-icon svg {
+  width: 18px;
+  height: 18px;
+}
 .theme-icon.sun {
-  left: -1.5px;
+  left: 3.5px;
   color: var(--lime-ink);
 }
 .theme-icon.moon {
-  right: -1.5px;
+  right: 3.5px;
   color: #f3f6fb;
 }
 .theme-icon:not(.on) {
@@ -1293,22 +1337,6 @@ body {
 }
 .compose-row.in-call:focus-within {
   box-shadow: 0 0 0 4px rgba(196, 240, 98, 0.35);
-}
-
-/* Voice-message indicator on bubbles created during call */
-.row.voice .bubble::before {
-  content: "";
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-right: 6px;
-  vertical-align: -1px;
-  background: currentColor;
-  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zm5 9a1 1 0 1 0-2 0 3 3 0 0 1-6 0 1 1 0 1 0-2 0 5 5 0 0 0 4 4.9V20a1 1 0 1 0 2 0v-2.1A5 5 0 0 0 17 12z'/></svg>")
-    center/contain no-repeat;
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zm5 9a1 1 0 1 0-2 0 3 3 0 0 1-6 0 1 1 0 1 0-2 0 5 5 0 0 0 4 4.9V20a1 1 0 1 0 2 0v-2.1A5 5 0 0 0 17 12z'/></svg>")
-    center/contain no-repeat;
-  opacity: 0.55;
 }
 
 .compose-hint {

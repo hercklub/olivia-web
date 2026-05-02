@@ -150,6 +150,7 @@ export const HOW_IT_WORKS_BOT: { content: string }[] = [
 export const HOW_IT_WORKS_QUICK: QuickReply[] = [
   { id: 'pricing', emoji: '💸', label: 'OK, koľko to stojí?', variant: 'primary' },
   { id: 'demo', emoji: '🎧', label: 'Skúsim demo' },
+  { id: 'faq', emoji: '🤔', label: 'Mám obavy' },
 ];
 
 export const PRICING_INTRO_BOT = [{ content: 'Tri balíčky. Bez záväzku, mesačne.' }];
@@ -168,11 +169,13 @@ export const RESTART_QUICK: QuickReply[] = [
   { id: 'pricing', emoji: '💸', label: 'Koľko to stojí?' },
   { id: 'how', label: 'Ako to funguje?' },
   { id: 'demo', emoji: '🎧', label: 'Pustite mi demo' },
+  { id: 'faq', emoji: '🤔', label: 'Mám obavy' },
 ];
 
 export const POST_CUSTOMER_QUICK: QuickReply[] = [
   { id: 'pricing', emoji: '💸', label: 'Koľko to stojí?', variant: 'primary' },
   { id: 'demo', emoji: '🎧', label: 'Iná firma' },
+  { id: 'faq', emoji: '🤔', label: 'Mám obavy' },
   { id: 'call', emoji: '📞', label: 'Zavolajte mi' },
 ];
 
@@ -185,6 +188,7 @@ export const POST_FAQ_QUICK: QuickReply[] = [
 export const POST_CALL_QUICK: QuickReply[] = [
   { id: 'pricing', emoji: '💸', label: 'Koľko to stojí?', variant: 'primary' },
   { id: 'how', label: 'Ako to funguje?' },
+  { id: 'faq', emoji: '🤔', label: 'Mám obavy' },
 ];
 
 export const BOOKING_QUICK: QuickReply[] = [
