@@ -45,9 +45,34 @@ export function useOliviaAgent(callbacks: AgentCallbacks = {}) {
     // WebSocket connection — bypasses LiveKit WebRTC stack which has
     // negotiation timeouts on this account. Higher latency than webrtc but
     // reliable. Switch back to 'webrtc' once ElevenLabs LiveKit pathing is fixed.
+    //
+    // Dynamic variables inject current date into the agent's context. Without
+    // this the LLM hallucinates dates from its training cutoff (often 2023).
+    // The agent's system prompt must reference {{current_date_local}} etc. to
+    // actually use these — see ElevenLabs dashboard.
+    const now = new Date();
+    const dynamicVariables = {
+      current_date_iso: now.toISOString(),
+      current_date_local: now.toLocaleString('sk-SK', {
+        timeZone: 'Europe/Bratislava',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      current_timezone: 'Europe/Bratislava',
+      current_weekday: now.toLocaleDateString('sk-SK', {
+        timeZone: 'Europe/Bratislava',
+        weekday: 'long',
+      }),
+    };
+
     await conversation.startSession({
       agentId: ELEVENLABS_AGENT_ID,
       connectionType: 'websocket',
+      dynamicVariables,
     });
   };
 

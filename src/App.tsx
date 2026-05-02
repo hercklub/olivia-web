@@ -1,6 +1,7 @@
 import { ConversationProvider } from '@elevenlabs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Brandmark } from './components/Brandmark';
+import { type OliviaState } from './components/OliviaAvatar';
+import { OliviaInteractive } from './components/OliviaInteractive';
 import { ThemeToggle } from './components/ThemeToggle';
 import { CallModeToggle } from './components/CallModeToggle';
 import { Sky } from './components/Sky';
@@ -21,6 +22,13 @@ import { useOliviaAgent } from './hooks/useOliviaAgent';
 import type { CallState, ChatMessage, Customer } from './types';
 
 type DemoStep = [number, () => void];
+
+function callStateToOlivia(s: CallState): OliviaState {
+  if (s === 'connecting') return 'wave';
+  if (s === 'thinking') return 'thinking';
+  if (s === 'speaking') return 'speaking';
+  return 'listening';
+}
 
 function ChatApp() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -294,7 +302,6 @@ function ChatApp() {
       <Sky />
       <div className="app-shell">
         <header className="topbar">
-          <Brandmark />
           <div className="top-meta">
             {devMode && <CallModeToggle live={liveMode} onToggle={toggleLiveMode} />}
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -306,12 +313,13 @@ function ChatApp() {
             {chat.phoneOpen && <PhoneOverlay onClose={() => chat.setPhoneOpen(false)} />}
 
             <div className="chat-head">
-              <div
-                className={`avatar is-talking ${callOpen ? 'in-call call-' + callState : ''}`}
-                aria-hidden="true"
-              >
-                <div className="mouth" />
-                {callOpen && <span className="avatar-pulse" />}
+              <div className="chat-head-avatar">
+                <OliviaInteractive
+                  baseState={callOpen ? (callStateToOlivia(callState) as OliviaState) : 'idle'}
+                  theme={theme === 'night' ? 'dark' : 'light'}
+                  size={96}
+                  interactive={!callOpen}
+                />
               </div>
               <div className="head-meta">
                 <div className="head-name">Olívia</div>
