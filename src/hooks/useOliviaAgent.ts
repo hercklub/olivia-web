@@ -14,21 +14,15 @@ export function useOliviaAgent() {
     clientTools: {
       show_pricing: ({ tier }: { tier?: string }) => {
         console.log('[Olivia] Show pricing:', tier);
-        // TODO: trigger UI state change
-        return { success: true };
       },
       play_demo: ({ industry }: { industry: string }) => {
         console.log('[Olivia] Play demo:', industry);
-        // TODO: trigger audio playback
-        return { success: true };
       },
       show_booking_calendar: ({ available_slots }: { available_slots: string[] }) => {
         console.log('[Olivia] Show calendar:', available_slots);
-        return { success: true };
       },
       show_testimonial: ({ company }: { company: string }) => {
         console.log('[Olivia] Show testimonial:', company);
-        return { success: true };
       },
     },
   });
