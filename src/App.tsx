@@ -1,9 +1,11 @@
+import { ConversationProvider } from '@elevenlabs/react';
 import { ChatContainer } from './components/ChatContainer';
 import { ChatInput } from './components/ChatInput';
 import { VoiceButton } from './components/VoiceButton';
 
 function App() {
   return (
+    <ConversationProvider>
     <div className="min-h-dvh flex flex-col bg-gradient-to-b from-teal-50 to-sky-50">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-white/70 backdrop-blur-sm border-b border-gray-100">
@@ -38,6 +40,7 @@ function App() {
       {/* Input */}
       <ChatInput />
     </div>
+    </ConversationProvider>
   );
 }
 
