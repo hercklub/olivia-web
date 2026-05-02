@@ -1,16 +1,29 @@
 import { useConversation } from '@elevenlabs/react';
 import { ELEVENLABS_AGENT_ID } from '../config';
 
-export function useOliviaAgent() {
+interface AgentCallbacks {
+  onUserMessage?: (text: string) => void;
+  onAgentMessage?: (text: string) => void;
+}
+
+interface AgentMessage {
+  source?: 'ai' | 'user' | string;
+  message?: string;
+}
+
+export function useOliviaAgent(callbacks: AgentCallbacks = {}) {
   const conversation = useConversation({
     agentId: ELEVENLABS_AGENT_ID,
     onConnect: () => console.log('[Olivia] Connected'),
     onDisconnect: () => console.log('[Olivia] Disconnected'),
-    onMessage: (message) => {
-      console.log('[Olivia] Message:', message);
+    onMessage: (raw: unknown) => {
+      const m = raw as AgentMessage;
+      const text = m?.message ?? '';
+      if (!text) return;
+      if (m.source === 'user') callbacks.onUserMessage?.(text);
+      else callbacks.onAgentMessage?.(text);
     },
     onError: (error) => console.error('[Olivia] Error:', error),
-    onModeChange: (mode) => console.log('[Olivia] Mode:', mode),
     clientTools: {
       show_pricing: ({ tier }: { tier?: string }) => {
         console.log('[Olivia] Show pricing:', tier);
@@ -28,28 +41,22 @@ export function useOliviaAgent() {
   });
 
   const startVoice = async () => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      await conversation.startSession({
-        agentId: ELEVENLABS_AGENT_ID,
-        connectionType: 'webrtc',
-      });
-    } catch (err) {
-      console.error('[Olivia] Failed to start voice:', err);
-    }
-  };
-
-  const sendText = (text: string) => {
-    conversation.sendUserMessage(text);
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    await conversation.startSession({
+      agentId: ELEVENLABS_AGENT_ID,
+      connectionType: 'webrtc',
+    });
   };
 
   return {
     status: conversation.status,
     isSpeaking: conversation.isSpeaking,
+    isMuted: conversation.isMuted,
+    setMuted: conversation.setMuted,
     startVoice,
     endSession: conversation.endSession,
-    sendText,
-    sendContext: conversation.sendContextualUpdate,
+    sendUserMessage: conversation.sendUserMessage,
+    sendContextualUpdate: conversation.sendContextualUpdate,
     setVolume: conversation.setVolume,
   };
 }
