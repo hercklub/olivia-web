@@ -11,6 +11,7 @@ export interface Customer {
   tagline: string;
   tone: Tone;
   initials: string;
+  image?: string;
   stat: string;
   statSub: string;
   caption: string;

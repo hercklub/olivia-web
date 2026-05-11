@@ -8,7 +8,15 @@ function CustomerAvatar({ customer, size = 44 }: { customer: Customer; size?: nu
       className={`cust-avatar tone-${customer.tone}`}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
-      {customer.initials}
+      {customer.image ? (
+        <img
+          src={customer.image}
+          alt={customer.businessName}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+        />
+      ) : (
+        customer.initials
+      )}
     </div>
   );
 }
@@ -40,6 +48,11 @@ export function CustomerPreview({
 export function CustomerCard({ customer }: { customer: Customer }) {
   return (
     <div className={`cust-card tone-${customer.tone}`}>
+      {customer.image && (
+        <div className="cust-card-cover">
+          <img src={customer.image} alt={customer.businessName} />
+        </div>
+      )}
       <div className="cust-card-head">
         <CustomerAvatar customer={customer} size={56} />
         <div className="cust-card-meta">
